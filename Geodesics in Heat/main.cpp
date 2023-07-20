@@ -6,9 +6,11 @@
 //
 
 #include <iostream>
-
+#include "Halfedge.hpp"
 int main(int argc, const char * argv[]) {
-    // insert code here...
-    std::cout << "Hello, World!\n";
+    Mesh test;
+    if(argc == 1)test.input("bun_zipper.off");
+    else if(argc >= 2)test.input(argv[1]);
+    std::cout << test.Vertices.size() << "," << test.Faces.size() << std::endl;
     return 0;
 }
