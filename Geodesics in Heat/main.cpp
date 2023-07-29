@@ -6,11 +6,16 @@
 //
 
 #include <iostream>
-#include "Halfedge.hpp"
+#include "Laplacian_Mesh.hpp"
 int main(int argc, const char * argv[]) {
-    Mesh test;
+    Laplacian_Mesh test;
     if(argc == 1)test.input("bun_zipper.off");
     else if(argc >= 2)test.input(argv[1]);
-    std::cout << test.Vertices.size() << "," << test.Faces.size() << std::endl;
+    test.makeHalfedgeList();
+    test.cal_TriArea();
+    test.cal_Laplacian();
+//    std::cout << test.Laplacian << std::endl;
+//    std::cout << test.Laplacian_C << std::endl;
+//    for(int i=0;i<test.vertex_TriArea.size();++i)std::cout << i << "," << test.vertex_TriArea[i] << std::endl;
     return 0;
 }

@@ -5,7 +5,7 @@
 //  Created by sunouchitoshiki on 2023/04/25.
 //
 
-#include "Halfedge.hpp"
+#include "Laplacian_Mesh.hpp"
 Halfedge::Halfedge(int i,int src,int tgt){
     index = i;
     face = -1;
@@ -33,10 +33,10 @@ void Halfedge::setNextPrev(int next,int prev){
 void Halfedge::setFace(int f){
     face = f;
 }
-int Mesh::h_cw(int h_index){
+int Laplacian_Mesh::h_cw(int h_index){
     return HalfedgeList[HalfedgeList[h_index].h_opp()].h_next;
 }
-int Mesh::h_ccw(int h_index){
+int Laplacian_Mesh::h_ccw(int h_index){
     if(HalfedgeList[h_index].h_prev == -1){
         //std::cout << "error_ccw" << std::endl;
         return -1;
@@ -44,12 +44,12 @@ int Mesh::h_ccw(int h_index){
     return HalfedgeList[HalfedgeList[h_index].h_prev].h_opp();
 }
 
-void Mesh::input(std::string InputFileName){
+void Laplacian_Mesh::input(std::string InputFileName){
     std::cout << "InputFileName:" << InputFileName << std::endl;
     if(std::filesystem::path(InputFileName).extension() == ".obj")inputOBJ(InputFileName);
     if(std::filesystem::path(InputFileName).extension() == ".off")inputOFF(InputFileName.c_str());
 }
-int Mesh::inputOBJ(std::string InputFileName){
+int Laplacian_Mesh::inputOBJ(std::string InputFileName){
     std::ifstream Inputfile(InputFileName);
     if (!Inputfile.is_open()) {
         std::cerr << "Could not open the file - '"
@@ -96,7 +96,7 @@ int Mesh::inputOBJ(std::string InputFileName){
     Inputfile.close();
     return EXIT_SUCCESS;
 }
-void Mesh::inputOFF(const char* InputFileName){
+void Laplacian_Mesh::inputOFF(const char* InputFileName){
     FILE *ifp = fopen(InputFileName,"r");
     int num_vertices, num_faces,dummy;
     fscanf(ifp, "OFF %d %d %d", &num_vertices, &num_faces, &dummy);
@@ -113,7 +113,7 @@ void Mesh::inputOFF(const char* InputFileName){
     }
     fclose(ifp);
 }
-void Mesh::outputOFF(const char* OutputFileName){
+void Laplacian_Mesh::outputOFF(const char* OutputFileName){
     FILE *ofp = fopen(OutputFileName,"w");
     fprintf(ofp,"OFF\n");
     fprintf(ofp,"%lu %lu 0\n",Vertices.size(),Faces.size());
@@ -130,7 +130,7 @@ void Mesh::outputOFF(const char* OutputFileName){
     }
     fclose(ofp);
 }
-void Mesh::outputOBJ(const char* OutputFileName){
+void Laplacian_Mesh::outputOBJ(const char* OutputFileName){
     FILE *ofp = fopen(OutputFileName,"w");
     for(auto &x:Vertices){
         fprintf(ofp,"v %lf %lf %lf\n",x(0),x(1),x(2));
@@ -145,14 +145,14 @@ void Mesh::outputOBJ(const char* OutputFileName){
     }
     fclose(ofp);
 }
-Mesh::Mesh(std::vector<Eigen::Vector3d> &V,
+Laplacian_Mesh::Laplacian_Mesh(std::vector<Eigen::Vector3d> &V,
            std::vector<std::vector<int>> &F){
     Vertices = V;
     Faces = F;
 }
-Mesh::Mesh(){
+Laplacian_Mesh::Laplacian_Mesh(){
 }
-void Mesh::makeHalfedgeList(){
+void Laplacian_Mesh::makeHalfedgeList(){
     std::map<std::pair<int, int>,int>map;
     int halfedgecnt = 0;
     for(int i=0;i<Faces.size();i++){
@@ -195,7 +195,7 @@ void Mesh::makeHalfedgeList(){
         v2he[h.v_src] = h.index;
     }
 }
-void Mesh::printOneLink(int v_index){
+void Laplacian_Mesh::printOneLink(int v_index){
     Halfedge h_now = HalfedgeList[v2he[v_index]];
     int start = h_now.v_tgt;
     do{
@@ -209,7 +209,7 @@ void Mesh::printOneLink(int v_index){
         h_now = HalfedgeList[h_ccw(h_now.index)];
     }while(h_ccw(h_now.index) != -1 && h_now.v_tgt != start);
 }
-double Mesh::angle_deficit(int v_index){
+double Laplacian_Mesh::angle_deficit(int v_index){
     double sum = 0;
     Halfedge h_now = HalfedgeList[v2he[v_index]];
     int start = h_now.v_tgt;
@@ -235,21 +235,107 @@ double Mesh::angle_deficit(int v_index){
 //    std::cout << "fin_ccw" << std::endl << std::endl;
     return 2*M_PI - sum;
 }
-double Mesh::sum_angle_deficit(){
+double Laplacian_Mesh::sum_angle_deficit(){
     double sum = 0;
     for(int i=0;i<Vertices.size();++i){
         sum += angle_deficit(i);
     }
     return sum;
 }
-double Mesh::ave_edge_length(){
-    double sum_not_bound = 0;
-    double sum_bound = 0;
-    for(int i=0;i<HalfedgeList.size();++i){
-        Eigen::Vector3d v0 = Vertices[HalfedgeList[i].v_src];
-        Eigen::Vector3d v1 = Vertices[HalfedgeList[i].v_tgt];
-        if(HalfedgeList[i].h_next != -1)sum_not_bound += (v0 - v1).norm();
-        else sum_bound += (v0 - v1).norm();
+void Laplacian_Mesh::cal_TriArea(){
+//    std::cout << "cal_TriArea" << std::endl;
+    vertex_TriArea.resize(Vertices.size());
+    for(int i=0;i<Vertices.size();++i){
+        double sum = 0;
+        Halfedge h_now = HalfedgeList[v2he[i]];
+        int start = h_now.v_tgt;
+//        std::cout << std::endl << "start_h_index=" << h_now.index <<",h_src="<< h_now.v_src << ",h_tgt=" << h_now.v_tgt <<std::endl;
+        Eigen::Vector3d x0 = Vertices[h_now.v_src];
+        do{
+            if(h_cw(h_now.index) == -1)break;
+            h_now = HalfedgeList[h_cw(h_now.index)];
+//            std::cout << "h_index=" << h_now.index <<",h_src="<< h_now.v_src << ",h_tgt=" <<   h_now.v_tgt <<std::endl;
+        }while(h_cw(h_now.index) != -1 && h_now.v_tgt != start);
+//        std::cout << "fin_cw" << std::endl << std::endl;
+        start = h_now.v_tgt;
+        do{
+            if(h_ccw(h_now.index) == -1)break;
+            Eigen::Vector3d x1 = Vertices[h_now.v_tgt] - x0;
+//            std::cout << "tgt=" << h_now.v_tgt << "," << "src=" << h_now.v_src << std::endl;
+            h_now = HalfedgeList[h_ccw(h_now.index)];
+            Eigen::Vector3d x2 = Vertices[h_now.v_tgt] - x0;
+            double area = x1.cross(x2).norm()/6;
+            sum += area;
+        }while(h_ccw(h_now.index) != -1 && h_now.v_tgt != start);
+//        std::cout << "tgt=" << h_now.v_tgt << "," << "src=" << h_now.v_src << std::endl;
+//        std::cout << "fin_ccw" << std::endl << std::endl;
+        vertex_TriArea[i] = sum;
     }
-    return sum_not_bound/2 + sum_bound;
+}
+void Laplacian_Mesh::cal_Laplacian(){
+    cal_TriArea();
+    Laplacian.resize(Vertices.size(), Vertices.size());
+    Laplacian_C.resize(Vertices.size(), Vertices.size());
+    Laplacian_C_heat.resize(Vertices.size(), Vertices.size());
+    std::vector<Triplet> triplets;
+    std::vector<Triplet> triplets_C;
+    std::vector<Triplet> triplets_A;
+    for(int i=0;i<Vertices.size();++i){
+        double sum = 0;
+        double sum_area = 0;
+        Halfedge h_now = HalfedgeList[v2he[i]];
+        int start = h_now.v_tgt;
+//        std::cout << std::endl << "start_h_index=" << h_now.index <<",h_src="<< h_now.v_src << ",h_tgt=" << h_now.v_tgt <<std::endl;
+        Eigen::Vector3d x0 = Vertices[h_now.v_src];
+        do{
+            if(h_cw(h_now.index) == -1)break;
+            h_now = HalfedgeList[h_cw(h_now.index)];
+//            std::cout << "h_index=" << h_now.index <<",h_src="<< h_now.v_src << ",h_tgt=" <<   h_now.v_tgt <<std::endl;
+        }while(h_cw(h_now.index) != -1 && h_now.v_tgt != start);
+//        std::cout << "fin_cw" << std::endl << std::endl;
+        start = h_now.v_tgt;
+        do{
+            int j = h_now.v_tgt;
+            if(h_ccw(h_now.index) == -1)break;
+            Eigen::Vector3d a = Vertices[h_now.v_tgt];
+            Eigen::Vector3d b = Vertices[HalfedgeList[h_now.h_next].v_tgt];
+            Halfedge h_opp = HalfedgeList[h_now.h_opp()];
+            Eigen::Vector3d c = Vertices[HalfedgeList[h_opp.h_next].v_tgt];
+            Eigen::Vector3d x1 = x0 - b;
+            Eigen::Vector3d x2 = a - b;
+            Eigen::Vector3d x3 = x0 - c;
+            Eigen::Vector3d x4 = a - c;
+            double tan_alpha = x1.cross(x2).norm() / x1.dot(x2);
+            double tan_beta = x3.cross(x4).norm() / x3.dot(x4);
+            double w_ij = (1/tan_alpha + 1/tan_beta)/vertex_TriArea[i];
+            sum += w_ij;
+            sum_area += vertex_TriArea[i];
+            triplets.emplace_back(i,j,w_ij);
+            triplets_C.emplace_back(i,j,w_ij*vertex_TriArea[i]);
+            h_now = HalfedgeList[h_ccw(h_now.index)];
+        }while(h_ccw(h_now.index) != -1 && h_now.v_tgt != start);
+//        std::cout << "tgt=" << h_now.v_tgt << "," << "src=" << h_now.v_src << std::endl;
+//        std::cout << "fin_ccw" << std::endl << std::endl;
+        triplets.emplace_back(i,i, sum);
+        triplets_C.emplace_back(i,i, sum*sum_area);
+        triplets_A.emplace_back(i,i, sum_area/3);
+    }
+    Laplacian.setFromTriplets(triplets.begin(), triplets.end());
+    Laplacian_C.setFromTriplets(triplets_C.begin(), triplets_C.end());
+    Laplacian_C_heat.setFromTriplets(triplets_A.begin(), triplets_A.end());
+}
+void Laplacian_Mesh::set_deltaOne(std::vector<int> vertex_ids){
+    delta.resize(Vertices.size());
+    for(auto &x:delta)x = 0;
+    for(auto &x:vertex_ids)delta[x] = 1;
+}
+void Laplacian_Mesh::cal_heat(double t){
+    heat.resize(Vertices.size());
+    Laplacian_C_heat -= t*Laplacian_C;
+    Eigen::SparseLU<SparseMatrix> solver;
+    solver.compute(Laplacian_C_heat);
+    heat = solver.solve(delta);
+}
+void cal_gradient(){
+    
 }

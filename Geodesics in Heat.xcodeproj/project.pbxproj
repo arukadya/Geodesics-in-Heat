@@ -8,7 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		671150252A6905EC00B8E17E /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 671150242A6905EC00B8E17E /* main.cpp */; };
-		6711502D2A6906FF00B8E17E /* Halfedge.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6711502B2A6906FF00B8E17E /* Halfedge.cpp */; };
+		671150332A69572500B8E17E /* Laplacian_Mesh.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 671150312A69572500B8E17E /* Laplacian_Mesh.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -26,8 +26,8 @@
 /* Begin PBXFileReference section */
 		671150212A6905EC00B8E17E /* Geodesics in Heat */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "Geodesics in Heat"; sourceTree = BUILT_PRODUCTS_DIR; };
 		671150242A6905EC00B8E17E /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
-		6711502B2A6906FF00B8E17E /* Halfedge.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Halfedge.cpp; sourceTree = "<group>"; };
-		6711502C2A6906FF00B8E17E /* Halfedge.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Halfedge.hpp; sourceTree = "<group>"; };
+		671150312A69572500B8E17E /* Laplacian_Mesh.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Laplacian_Mesh.cpp; sourceTree = "<group>"; };
+		671150322A69572500B8E17E /* Laplacian_Mesh.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Laplacian_Mesh.hpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -61,8 +61,8 @@
 			isa = PBXGroup;
 			children = (
 				671150242A6905EC00B8E17E /* main.cpp */,
-				6711502B2A6906FF00B8E17E /* Halfedge.cpp */,
-				6711502C2A6906FF00B8E17E /* Halfedge.hpp */,
+				671150312A69572500B8E17E /* Laplacian_Mesh.cpp */,
+				671150322A69572500B8E17E /* Laplacian_Mesh.hpp */,
 			);
 			path = "Geodesics in Heat";
 			sourceTree = "<group>";
@@ -125,7 +125,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				671150252A6905EC00B8E17E /* main.cpp in Sources */,
-				6711502D2A6906FF00B8E17E /* Halfedge.cpp in Sources */,
+				671150332A69572500B8E17E /* Laplacian_Mesh.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
