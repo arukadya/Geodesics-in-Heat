@@ -9,13 +9,23 @@
 #include "Laplacian_Mesh.hpp"
 int main(int argc, const char * argv[]) {
     Laplacian_Mesh test;
-    if(argc == 1)test.input("bun_zipper.off");
-    else if(argc >= 2)test.input(argv[1]);
+    std::vector<int>delta_id = {0};
+    std::string inputFileName;
+    std::string outputFileName;
+    if(argc == 1){
+        inputFileName = "294_kitten_uniform.off";
+        outputFileName = "kitten";
+    }
+    else if(argc >= 2){
+        inputFileName = argv[1];
+        outputFileName = "test";
+    }
+    test.input(inputFileName);
     test.makeHalfedgeList();
-    test.cal_TriArea();
-    test.cal_Laplacian();
-//    std::cout << test.Laplacian << std::endl;
-//    std::cout << test.Laplacian_C << std::endl;
-//    for(int i=0;i<test.vertex_TriArea.size();++i)std::cout << i << "," << test.vertex_TriArea[i] << std::endl;
+    double t = test.ave_edge_length();
+    std::cout << "t=" << t << std::endl;
+    test.cal_geodescis_distance(t*t, delta_id);
+    test.outputVTK((outputFileName + "_geodescis_distance.vtk").c_str());
+    test.output_Vector_VTK((outputFileName + "_gradient.vtk").c_str());
     return 0;
 }

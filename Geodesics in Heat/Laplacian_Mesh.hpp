@@ -48,11 +48,12 @@ struct Halfedge{
 struct Laplacian_Mesh{
     std::vector<Eigen::Vector3d> Vertices;
     std::vector<Eigen::Vector3d> gradients;
+    Eigen::VectorXd integrated_div;
     std::vector<std::vector<int>> Faces;
     std::vector<Halfedge>HalfedgeList;
     std::vector<int>v2he;
     Eigen::VectorXd heat;
-    std::vector<double>geodescis_distance;
+    Eigen::VectorXd geodescis_distance;
     Eigen::VectorXd delta;
     std::vector<double> vertex_TriArea;
     SparseMatrix Laplacian;
@@ -65,6 +66,7 @@ struct Laplacian_Mesh{
     void outputOFF(const char* OutputFileName);
     void outputOBJ(const char* OutputFileName);
     void outputVTK(const char* OutputFileName);
+    void output_Vector_VTK(const char* OutputFileName);
     void input(std::string InputFlieName);
     int inputOBJ(std::string InputFlieName);
     void inputOFF(const char* InputFileName);
@@ -77,8 +79,11 @@ struct Laplacian_Mesh{
     void cal_TriArea();
     void cal_Laplacian();
     void cal_heat(double t);
-    void set_deltaOne(std::vector<int> vertex_id);
+    void set_deltaOne(std::vector<int> &vertex_id);
     void cal_gradient();
+    void cal_integrated_div();
+    void cal_geodescis_distance(double t,std::vector<int> &vertex_ids);
+    double ave_edge_length();
 };
 
 

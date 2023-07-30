@@ -145,6 +145,53 @@ void Laplacian_Mesh::outputOBJ(const char* OutputFileName){
     }
     fclose(ofp);
 }
+void Laplacian_Mesh::outputVTK(const char* OutputFileName){
+    FILE *ofp = fopen(OutputFileName,"w");
+    fprintf(ofp, "Title Data\n");
+    fprintf(ofp, "ASCII\n");
+    fprintf(ofp, "DATASET UNSTRUCTURED_GRID\n");
+    fprintf(ofp, "POINTS           3 float\n");
+    for(auto &x:Vertices)fprintf(ofp,"%lf %lf %lf\n",x(0),x(1),x(2));
+    fprintf(ofp, "CELLS %d %d\n", Faces.size() ,Faces.size()*4);
+    for(int i=0;i<Faces.size();i++){
+        fprintf(ofp,"3 ");
+        for(int j=0;j < 3;j++){
+            fprintf(ofp,"%d",Faces[i][j]);
+            if(j != 2)fprintf(ofp," ");
+            else fprintf(ofp,"\n");
+        }
+    }
+    fprintf(ofp,"CELL_TYPES   %d\n",Faces.size());
+    for(int i=0;i<Faces.size();i++)fprintf(ofp,"5\n");
+    fprintf(ofp, "SCALARS Temp float\n");
+    fprintf(ofp, "LOOKUP_TABLE default\n");
+    for(auto &x:geodescis_distance)fprintf(ofp, "%lf\n",x);
+    fclose(ofp);
+}
+void Laplacian_Mesh::output_Vector_VTK(const char* OutputFileName){
+    FILE *ofp = fopen(OutputFileName,"w");
+    fprintf(ofp, "Title Data\n");
+    fprintf(ofp, "ASCII\n");
+    fprintf(ofp, "DATASET UNSTRUCTURED_GRID\n");
+    fprintf(ofp, "POINTS           %d float\n",Faces.size());
+    
+    for(int i=0;i<Faces.size();++i){
+        Eigen::Vector3d center_Face = (Vertices[Faces[i][0]] + Vertices[Faces[i][1]] + Vertices[Faces[i][2]])/3;
+        fprintf(ofp,"%lf %lf %lf\n",center_Face.x(),center_Face.y(),center_Face.z());
+    }
+    fprintf(ofp, "CELLS %d %d\n", Faces.size() ,Faces.size());
+    for(int i=0;i<Faces.size();++i){
+        fprintf(ofp,"1 %d",i);
+        fprintf(ofp,"\n");
+    }
+//    fprintf(ofp,"CELL_TYPES   %d\n",Faces.size());
+    
+    for(int i=0;i<Faces.size();i++)fprintf(ofp,"1\n");
+    fprintf(ofp, "POINT_DATA    %d\n",Faces.size());
+    fprintf(ofp, "Vector grad float\n");
+    for(auto &u:gradients)fprintf(ofp, "%lf %lf %lf\n",u.x(),u.y(),u.z());
+    fclose(ofp);
+}
 Laplacian_Mesh::Laplacian_Mesh(std::vector<Eigen::Vector3d> &V,
            std::vector<std::vector<int>> &F){
     Vertices = V;
@@ -270,6 +317,7 @@ void Laplacian_Mesh::cal_TriArea(){
 //        std::cout << "tgt=" << h_now.v_tgt << "," << "src=" << h_now.v_src << std::endl;
 //        std::cout << "fin_ccw" << std::endl << std::endl;
         vertex_TriArea[i] = sum;
+        std::cout << "area_" << i << "=" << sum << std::endl;
     }
 }
 void Laplacian_Mesh::cal_Laplacian(){
@@ -307,35 +355,126 @@ void Laplacian_Mesh::cal_Laplacian(){
             Eigen::Vector3d x4 = a - c;
             double tan_alpha = x1.cross(x2).norm() / x1.dot(x2);
             double tan_beta = x3.cross(x4).norm() / x3.dot(x4);
-            double w_ij = (1/tan_alpha + 1/tan_beta)/vertex_TriArea[i];
+//            double w_ij = (1/tan_alpha + 1/tan_beta)/vertex_TriArea[i];
+            double w_ij = (1/tan_alpha + 1/tan_beta);
             sum += w_ij;
             sum_area += vertex_TriArea[i];
             triplets.emplace_back(i,j,w_ij);
-            triplets_C.emplace_back(i,j,w_ij*vertex_TriArea[i]);
+//            triplets_C.emplace_back(i,j,w_ij*vertex_TriArea[i]);
+            triplets_C.emplace_back(i,j,w_ij/2);
             h_now = HalfedgeList[h_ccw(h_now.index)];
         }while(h_ccw(h_now.index) != -1 && h_now.v_tgt != start);
 //        std::cout << "tgt=" << h_now.v_tgt << "," << "src=" << h_now.v_src << std::endl;
 //        std::cout << "fin_ccw" << std::endl << std::endl;
-        triplets.emplace_back(i,i, sum);
-        triplets_C.emplace_back(i,i, sum*sum_area);
+        triplets.emplace_back(i,i, -sum);
+//        triplets_C.emplace_back(i,i, -sum*sum_area);
+        triplets_C.emplace_back(i,i, -sum);
         triplets_A.emplace_back(i,i, sum_area/3);
     }
     Laplacian.setFromTriplets(triplets.begin(), triplets.end());
     Laplacian_C.setFromTriplets(triplets_C.begin(), triplets_C.end());
     Laplacian_C_heat.setFromTriplets(triplets_A.begin(), triplets_A.end());
 }
-void Laplacian_Mesh::set_deltaOne(std::vector<int> vertex_ids){
+void Laplacian_Mesh::set_deltaOne(std::vector<int> &vertex_ids){
+//    std::cout << Vertices.size() << std::endl;
     delta.resize(Vertices.size());
     for(auto &x:delta)x = 0;
-    for(auto &x:vertex_ids)delta[x] = 1;
+//    for(auto &x:vertex_ids){
+//        std::cout << x << std::endl;
+//        delta[x] = 1;
+//        std::cout << x << std::endl;
+//    }
+    for(int i=0;i<vertex_ids.size();++i){
+        delta(vertex_ids[i]) = 1;
+    }
 }
 void Laplacian_Mesh::cal_heat(double t){
-    heat.resize(Vertices.size());
+//    std::cout << Laplacian_C << std::endl;
+//    heat.resize(Vertices.size());
+//    std::cout << Laplacian_C_heat << std::endl;
     Laplacian_C_heat -= t*Laplacian_C;
+//    std::cout << Laplacian_C_heat << std::endl;
     Eigen::SparseLU<SparseMatrix> solver;
     solver.compute(Laplacian_C_heat);
     heat = solver.solve(delta);
+//    std::cout << heat.transpose() << std::endl;
 }
-void cal_gradient(){
-    
+
+void Laplacian_Mesh::cal_gradient(){
+    gradients.resize(Faces.size());
+    for(int i=0;i<Faces.size();++i){
+        gradients[i] = {0,0,0};
+        for(int j=0;j<3;++j){
+            Eigen::Vector3d a = Vertices[Faces[i][j]];
+            Eigen::Vector3d b = Vertices[Faces[i][(j+1)%3]];
+            Eigen::Vector3d c = Vertices[Faces[i][(j+2)%3]];
+            Eigen::Vector3d e = c-b;
+            Eigen::Vector3d Normal = (b-a).cross(c-a);
+            double area_f = Normal.norm()/2;
+            gradients[i] += 1/(2*area_f)*heat[Faces[i][j]]*Normal.normalized().cross(e);
+        }
+    }
 }
+void Laplacian_Mesh::cal_integrated_div(){
+    integrated_div.resize(Vertices.size());
+    for(int i=0;i<Vertices.size();++i){
+        integrated_div[i] = 0;
+        Halfedge h_now = HalfedgeList[v2he[i]];
+        int start = h_now.v_tgt;
+//        std::cout << std::endl << "start_h_index=" << h_now.index <<",h_src="<< h_now.v_src << ",h_tgt=" << h_now.v_tgt <<std::endl;
+        Eigen::Vector3d x0 = Vertices[h_now.v_src];
+        do{
+            if(h_cw(h_now.index) == -1)break;
+            h_now = HalfedgeList[h_cw(h_now.index)];
+//            std::cout << "h_index=" << h_now.index <<",h_src="<< h_now.v_src << ",h_tgt=" <<   h_now.v_tgt <<std::endl;
+        }while(h_cw(h_now.index) != -1 && h_now.v_tgt != start);
+//        std::cout << "fin_cw" << std::endl << std::endl;
+        start = h_now.v_tgt;
+        do{
+            int j = h_now.v_tgt;
+            if(h_ccw(h_now.index) == -1)break;
+            Eigen::Vector3d a = Vertices[h_now.v_tgt];
+            Eigen::Vector3d b = Vertices[HalfedgeList[h_now.h_next].v_tgt];
+            Eigen::Vector3d e1 = b-x0;
+            Eigen::Vector3d e2 = a-x0;
+            Eigen::Vector3d e3 = b-a;
+            double tan1 = -e1.cross(e3).norm() / -e1.dot(e3);
+            double tan2 = -e2.cross(-e3).norm() / -e2.dot(-e3);
+            integrated_div[i] += (1/2)*( (1/tan1)*e1.dot(-gradients[h_now.v_src].normalized()) + (1/tan2)*e2.dot(-gradients[h_now.v_src].normalized()) );
+            h_now = HalfedgeList[h_ccw(h_now.index)];
+        }while(h_ccw(h_now.index) != -1 && h_now.v_tgt != start);
+//        std::cout << "tgt=" << h_now.v_tgt << "," << "src=" << h_now.v_src << std::endl;
+//        std::cout << "fin_ccw" << std::endl << std::endl;
+    }
+}
+double Laplacian_Mesh::ave_edge_length(){
+    double sum_not_bound = 0;
+    double sum_bound = 0;
+    int num_edges = Faces.size()/2*3;
+    for(int i=0;i<HalfedgeList.size();++i){
+        Eigen::Vector3d v0 = Vertices[HalfedgeList[i].v_src];
+        Eigen::Vector3d v1 = Vertices[HalfedgeList[i].v_tgt];
+        sum_not_bound += (v0 - v1).norm();
+    }
+    return sum_not_bound/num_edges/2;
+}
+void Laplacian_Mesh::cal_geodescis_distance(double t,std::vector<int> &vertex_ids){
+    std::cout << "start" << std::endl;
+    set_deltaOne(vertex_ids);
+    std::cout << "set_delta" << std::endl;
+    cal_TriArea();
+    std::cout << "cal_TriArea" << std::endl;
+    cal_Laplacian();
+    std::cout << "cal_Lapracian" << std::endl;
+    cal_heat(t);
+    std::cout << "cal_heat" << std::endl;
+    cal_gradient();
+    for(int i=0;i<gradients.size();++i)std::cout << gradients[i].transpose() << std::endl;
+    std::cout << "cal_gradient" << std::endl;
+    cal_integrated_div();
+    std::cout << "cal_integrated_div" << std::endl;
+    Eigen::SparseLU<SparseMatrix> solver;
+    solver.compute(Laplacian_C);
+    geodescis_distance = solver.solve(integrated_div.normalized());
+}
+

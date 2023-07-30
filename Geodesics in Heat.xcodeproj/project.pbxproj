@@ -185,6 +185,7 @@
 				HEADER_SEARCH_PATHS = (
 					"\"$(SRCROOT)/../../library/eigen-3.4.0\"",
 					"\"$(SRCROOT)/../../library/openmpi-4.1.5\"",
+					"\"$(SRCROOT)/../../library/eigen-3.4.0\"",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.1;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
@@ -241,6 +242,7 @@
 				HEADER_SEARCH_PATHS = (
 					"\"$(SRCROOT)/../../library/eigen-3.4.0\"",
 					"\"$(SRCROOT)/../../library/openmpi-4.1.5\"",
+					"\"$(SRCROOT)/../../library/eigen-3.4.0\"",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.1;
 				MTL_ENABLE_DEBUG_INFO = NO;
