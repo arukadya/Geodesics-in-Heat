@@ -1,9 +1,4 @@
-//
-//  Laplacian_Mesh.hpp
-//  Geodesics in Heat
-//
-//  Created by 須之内俊樹 on 2023/07/20.
-//
+//レポートB（測地距離）7/30 23N8100018B 須之内俊樹 Sunouchi Toshiki/スノウチトシキ
 
 #ifndef Laplacian_Mesh_hpp
 #define Laplacian_Mesh_hpp

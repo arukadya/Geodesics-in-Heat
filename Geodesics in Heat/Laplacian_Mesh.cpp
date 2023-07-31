@@ -374,7 +374,7 @@ void Laplacian_Mesh::cal_Laplacian(){
 //        std::cout << "fin_ccw" << std::endl << std::endl;
         triplets.emplace_back(i,i, -sum);
 //        triplets_C.emplace_back(i,i, -sum*sum_area);
-        triplets_C.emplace_back(i,i, -sum);
+        triplets_C.emplace_back(i,i, -sum/2);
         triplets_A.emplace_back(i,i, sum_area);
     }
     Laplacian.setFromTriplets(triplets.begin(), triplets.end());
@@ -494,6 +494,6 @@ void Laplacian_Mesh::cal_geodescis_distance(double t,std::vector<int> &vertex_id
 //    geodescis_distance = solver.solve(r);
     double min = geodescis_distance.minCoeff();
     for(auto &x:geodescis_distance)x -= min;
-    for(auto &x:geodescis_distance)std::cout << x << std::endl;
+//    for(auto &x:geodescis_distance)std::cout << x << std::endl;
 }
 
