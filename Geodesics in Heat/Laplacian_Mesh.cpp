@@ -1,7 +1,3 @@
-//
-//  Halfedge.cpp
-//  m1morimori
-//
 //  Created by sunouchitoshiki on 2023/04/25.
 //
 
