@@ -1,4 +1,3 @@
-選択したテーマ　測地距離
 OS macOS Ventura 13.4
 コンパイラ Apple clang version 14.0.3
 コンパイルコマンド g++ main.cpp Laplacian_Mesh.cpp -I /Users/sunouchi/c++/library/eigen-3.4.0 -std=c++17 -O3
