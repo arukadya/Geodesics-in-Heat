@@ -1,5 +1,3 @@
-//レポートB（測地距離）7/30 23N8100018B 須之内俊樹 Sunouchi Toshiki/スノウチトシキ
-
 #ifndef Laplacian_Mesh_hpp
 #define Laplacian_Mesh_hpp
 
